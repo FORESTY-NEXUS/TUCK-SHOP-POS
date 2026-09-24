@@ -1,0 +1,261 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Sevesto POS design system
+   One brand color (forest green), a warm neutral scale, sparse semantics.
+   Fonts are self-hosted (public/fonts) so the app works fully offline on
+   the client's counter PC — no Google Fonts CDN at runtime.
+   ───────────────────────────────────────────────────────────────────────── */
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  src: url("/fonts/inter-latin-400-normal.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 500;
+  src: url("/fonts/inter-latin-500-normal.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 600;
+  src: url("/fonts/inter-latin-600-normal.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 700;
+  src: url("/fonts/inter-latin-700-normal.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 800;
+  src: url("/fonts/inter-latin-800-normal.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 600;
+  src: url("/fonts/manrope-latin-600-normal.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 700;
+  src: url("/fonts/manrope-latin-700-normal.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 800;
+  src: url("/fonts/manrope-latin-800-normal.woff2") format("woff2");
+  font-display: swap;
+}
+
+:root {
+  --background: #faf9f7;      /* warm paper background */
+  --foreground: #1c1917;      /* stone-900 text */
+  --surface: #ffffff;
+  --border: #e7e5e4;
+  --muted: #78716c;
+  color-scheme: light;
+}
+
+/* Brand scale — forest green, the single accent */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-brand-50: #f0f7f2;
+  --color-brand-100: #dcefe2;
+  --color-brand-200: #b8dfc6;
+  --color-brand-300: #8ac7a2;
+  --color-brand-400: #57a87a;
+  --color-brand-500: #358a5e;
+  --color-brand-600: #226b49;
+  --color-brand-700: #1b573c;
+  --color-brand-800: #15452f;
+  --color-brand-900: #103723;
+  --color-brand-950: #0a2417;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-brand: "Manrope", "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.006em;
+}
+
+/* Headings in the display face */
+h1, h2, h3, .font-brand {
+  font-family: var(--font-brand);
+  letter-spacing: -0.015em;
+}
+
+/* Money / counts align cleanly */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Small, consistent component classes used across screens.
+   Defined as plain CSS (no @apply chains) so Tailwind v4 compiles them
+   without custom-utility resolution. They live inside @layer components so
+   Tailwind utilities (w-*, max-w-*, px-*) can override them cleanly — e.g.
+   `input w-48` gives a 12rem field even though .input sets width:100%. */
+@layer components {
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  user-select: none;
+  cursor: pointer;
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background-color: var(--color-brand-600);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+.btn-primary:hover {
+  background-color: var(--color-brand-700);
+}
+.btn-primary:active {
+  background-color: var(--color-brand-800);
+}
+.btn-secondary {
+  background-color: #fff;
+  color: var(--color-foreground);
+  border: 1px solid #d6d3d1;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+.btn-secondary:hover {
+  background-color: #fafaf9;
+}
+.btn-danger {
+  background-color: #dc2626;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+.btn-danger:hover {
+  background-color: #b91c1c;
+}
+.btn-ghost {
+  color: #78716c;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+.btn-ghost:hover {
+  color: var(--color-foreground);
+  background-color: #f5f5f4;
+}
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid #e7e5e4;
+  border-radius: 0.75rem;
+}
+.input {
+  width: 100%;
+  border: 1px solid #d6d3d1;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  background-color: #fff;
+  outline: none;
+}
+.input:focus {
+  border-color: var(--color-brand-600);
+  box-shadow: 0 0 0 3px rgba(34, 107, 73, 0.2);
+}
+}
+
+/* In Windows High Contrast / forced-colors mode, explicitly set input
+   background and color so they are not swallowed by system defaults. */
+@media (forced-colors: active) {
+  input,
+  textarea,
+  select {
+    color: LinkText;
+    background-color: Field;
+  }
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: 2px solid Highlight;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(28, 25, 23, 0.25);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(28, 25, 23, 0.45);
+}
+::-webkit-scrollbar-button {
+  display: none;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(28, 25, 23, 0.3) transparent;
+}
+
+/* The home screen scrolls only through its content region. Keep its rail at
+   the viewport edge and use the brand green without adding visual weight. */
+.home-scrollbar {
+  scrollbar-color: rgba(34, 107, 73, 0.7) transparent;
+}
+.home-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+.home-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(34, 107, 73, 0.7);
+  border: 2px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+.home-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-brand-700);
+}
+
+/* Hide number input arrows */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
