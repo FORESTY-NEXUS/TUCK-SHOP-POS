@@ -46,6 +46,18 @@ export default function OrderHistoryClient({ initialData }: { initialData: any }
   const [loading, setLoading] = useState(false);
   const [returnQtys, setReturnQtys] = useState<Record<string, number>>({});
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [canReturn, setCanReturn] = useState(false);
+  const [canVoid, setCanVoid] = useState(false);
+  useEffect(() => {
+    fetch("/api/auth/session")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const perms: string[] = d?.user?.permissions || [];
+        setCanReturn(perms.includes("salesReturn"));
+        setCanVoid(perms.includes("salesVoid"));
+      })
+      .catch(() => {});
+  }, []);
   // Out-of-order response guard for rapid filter/pagination changes.
   const reqId = useRef(0);
 
@@ -292,7 +304,7 @@ export default function OrderHistoryClient({ initialData }: { initialData: any }
                           </div>
                         </div>
 
-                        {(o.status === "completed" || o.status === "partially_returned") && (
+                        {(canReturn || canVoid) && (o.status === "completed" || o.status === "partially_returned") && (
                           <div className="mt-4 pt-4 border-t border-stone-200">
                             <h4 className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2">Return / Void</h4>
                             <div className="space-y-1.5">
@@ -319,22 +331,26 @@ export default function OrderHistoryClient({ initialData }: { initialData: any }
                               })}
                             </div>
                             <div className="flex gap-2 mt-3">
-                              <button
-                                type="button"
-                                disabled={processingId === o._id}
-                                onClick={() => processReturn(o, "return")}
-                                className="btn-secondary text-xs disabled:opacity-50"
-                              >
-                                {processingId === o._id ? "Processing…" : "Process Return"}
-                              </button>
-                              <button
-                                type="button"
-                                disabled={processingId === o._id}
-                                onClick={() => processReturn(o, "void")}
-                                className="text-xs px-3 py-1.5 rounded-lg font-medium bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50"
-                              >
-                                Void Entire Sale
-                              </button>
+                              {canReturn && (
+                                <button
+                                  type="button"
+                                  disabled={processingId === o._id}
+                                  onClick={() => processReturn(o, "return")}
+                                  className="btn-secondary text-xs disabled:opacity-50"
+                                >
+                                  {processingId === o._id ? "Processing…" : "Process Return"}
+                                </button>
+                              )}
+                              {canVoid && (
+                                <button
+                                  type="button"
+                                  disabled={processingId === o._id}
+                                  onClick={() => processReturn(o, "void")}
+                                  className="text-xs px-3 py-1.5 rounded-lg font-medium bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50"
+                                >
+                                  Void Entire Sale
+                                </button>
+                              )}
                             </div>
                           </div>
                         )}

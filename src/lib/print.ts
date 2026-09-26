@@ -55,17 +55,25 @@ async function generateEscPosBuffer(order: any): Promise<Buffer> {
   // Customer receipt format (with prices) — the only receipt type a tuck
   // shop needs (single counter sale, no kitchen ticket / delivery slip).
   {
-    // Best-effort store logo (raster) — the printer lib needs a PNG decoder;
-    // if anything goes wrong the receipt still prints with the wordmark.
+    // Best-effort store logo (raster). printImage() in this library reads
+    // from a file path, not a raw buffer, so the base64 logo is written to
+    // a temp PNG first; if anything goes wrong the receipt still prints
+    // with the wordmark instead of failing the whole job.
     const logoPng = settings.receiptLogo?.startsWith("data:image/png;base64,")
       ? Buffer.from(settings.receiptLogo.split(",")[1] || "", "base64")
       : null;
+    let logoTempFile: string | null = null;
     if (logoPng && logoPng.length > 0 && logoPng.length < 1_500_000) {
       try {
-        // width capped to the paper, height scaled to keep the aspect ratio
-        (printer as any).printImage(logoPng);
+        logoTempFile = join(tmpdir(), `receipt-logo-${Date.now()}.png`);
+        writeFileSync(logoTempFile, logoPng);
+        await (printer as any).printImage(logoTempFile);
       } catch (err) {
         console.warn("Receipt logo skipped:", err);
+      } finally {
+        if (logoTempFile && existsSync(logoTempFile)) {
+          try { unlinkSync(logoTempFile); } catch { /* best-effort cleanup */ }
+        }
       }
     }
 
@@ -165,12 +173,24 @@ async function generateEscPosBuffer(order: any): Promise<Buffer> {
     }
   }
 
-  // Execute to get the buffer
-  // Since we're using file interface, we need to manually get the buffer
-  // The ThermalPrinter with file interface doesn't actually write to file in this lib version
-  // So we need to access the internal buffer
-  const buffer = printer.getBuffer?.();
-  return Buffer.from(buffer || "");
+  // Execute to get the buffer.
+  // We use the "file" interface only to build up the ESC/POS command
+  // sequence in memory — the library never actually writes it anywhere for
+  // this interface type, so getBuffer() is the only way to retrieve what
+  // was built. If a future version of the library removes/renames this
+  // method, fail loudly here rather than silently sending an empty buffer
+  // to the printer (which would report "printed" while producing a blank
+  // slip of paper).
+  if (typeof (printer as any).getBuffer !== "function") {
+    throw new Error(
+      "node-thermal-printer has no getBuffer() in this version — receipt buffer can't be built. Check the installed package version."
+    );
+  }
+  const buffer = (printer as any).getBuffer();
+  if (!buffer || buffer.length === 0) {
+    throw new Error("Receipt buffer came back empty — nothing was sent to the printer.");
+  }
+  return Buffer.from(buffer);
 }
 
 async function sendToWindowsPrinter(printerName: string, data: Buffer): Promise<{ success: boolean; error?: string }> {

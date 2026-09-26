@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/db";
 import { Customer } from "@/models/Customer";
 import { CustomerCredit } from "@/models/CustomerCredit";
 import { verifySession, SESSION_COOKIE } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,10 @@ export async function POST(
   if (!session) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+  if (!hasPermission(session.role, session.permissions, "udhaarCollect")) {
+    return NextResponse.json({ error: "You're not allowed to record Udhaar payments" }, { status: 403 });
+  }
+
 
   // ── Parse body ──────────────────────────────────────────────────────────
   const body = await req.json();

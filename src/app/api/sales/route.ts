@@ -6,8 +6,10 @@ import { Shift } from "@/models/Shift";
 import { StockMovement } from "@/models/StockMovement";
 import { Customer } from "@/models/Customer";
 import { CustomerCredit } from "@/models/CustomerCredit";
+import { Settings } from "@/models/Settings";
 import { Counter, nextSequence } from "@/models/Counter";
 import { verifySession, SESSION_COOKIE } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import { printReceipt } from "@/lib/print";
 
 export const dynamic = "force-dynamic";
@@ -48,16 +50,36 @@ export async function POST(req: NextRequest) {
     items,
     paymentMethod,
     amountReceived = 0,
-    discountPercent = 0,
+    discountPercent: rawDiscountPercent = 0,
     customer: customerId,
     note,
   } = body;
+
+  // Never trust a client-supplied percentage blindly: clamp to a sane range,
+  // and require the "discounts" permission for anything above 0%. Without
+  // this, any logged-in cashier could hand out a 100% discount from the API
+  // directly (there's no button for it in the POS today, but the endpoint
+  // itself didn't check) and simply pocket what the customer paid.
+  const discountPercent = Math.min(100, Math.max(0, Number(rawDiscountPercent) || 0));
+  if (discountPercent > 0 && !hasPermission(session.role, session.permissions, "salesDiscount")) {
+    return NextResponse.json({ error: "You're not allowed to apply a discount" }, { status: 403 });
+  }
 
   if (!Array.isArray(items) || items.length === 0) {
     return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
   }
   if (!paymentMethod) {
     return NextResponse.json({ error: "Payment method is required" }, { status: 400 });
+  }
+
+  if (paymentMethod === "credit") {
+    const settings = await Settings.findOne().lean();
+    if (settings && (settings as any).udhaarEnabled === false) {
+      return NextResponse.json({ error: "Udhaar (credit) is turned off in settings" }, { status: 403 });
+    }
+    if (!hasPermission(session.role, session.permissions, "salesCreditGive")) {
+      return NextResponse.json({ error: "You're not allowed to give store credit" }, { status: 403 });
+    }
   }
 
   // Credit requires a customer

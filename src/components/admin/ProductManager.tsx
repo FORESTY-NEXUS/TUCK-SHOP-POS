@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Search, Edit2, Trash2, Package, X, Layers } from "lucide-react";
 
@@ -178,6 +178,20 @@ export default function ProductManager({
   initialCategories: Category[];
 }) {
   const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [canCreate, setCanCreate] = useState(false);
+  const [canEdit, setCanEdit] = useState(false);
+  const [canDelete, setCanDelete] = useState(false);
+  useEffect(() => {
+    fetch("/api/auth/session")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const perms: string[] = d?.user?.permissions || [];
+        setCanCreate(perms.includes("productsCreate"));
+        setCanEdit(perms.includes("productsEdit"));
+        setCanDelete(perms.includes("productsDelete"));
+      })
+      .catch(() => {});
+  }, []);
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -422,6 +436,7 @@ export default function ProductManager({
   return (
     <div className="space-y-6">
       {/* Add product form */}
+      {canCreate && (
       <div className="card p-5 bg-white border border-stone-200">
         <h2 className="text-sm font-semibold text-stone-700 uppercase tracking-wide mb-4 flex items-center gap-2">
           <Plus className="w-4 h-4 text-brand-600" />
@@ -541,6 +556,7 @@ export default function ProductManager({
           )}
         </div>
       </div>
+      )}
 
       {/* Product List Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -586,12 +602,16 @@ export default function ProductManager({
                         )}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
+                        {canEdit && (
                         <button onClick={() => openEdit(p)} className="w-7 h-7 flex items-center justify-center rounded bg-stone-50 text-stone-500 hover:text-brand-600 hover:bg-brand-50 transition-colors" title="Edit">
                             <Edit2 className="w-3.5 h-3.5" />
                         </button>
+                        )}
+                        {canDelete && (
                         <button onClick={() => removeProduct(p._id, p.name)} className="w-7 h-7 flex items-center justify-center rounded bg-stone-50 text-stone-500 hover:text-red-600 hover:bg-red-50 transition-colors" title="Delete">
                             <Trash2 className="w-3.5 h-3.5" />
                         </button>
+                        )}
                     </div>
                 </div>
                 

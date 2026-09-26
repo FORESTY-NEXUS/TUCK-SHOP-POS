@@ -69,7 +69,14 @@ export default function DashboardPage() {
       icon: TrendingUp,
       note: `${summary ? Number(summary.grossRevenue).toLocaleString() : "—"} gross · ${summary ? Number(summary.totalRefunded).toLocaleString() : "—"} refunded`,
     },
-    { title: "Orders", value: summary ? String(summary.totalOrders) : "—", icon: ShoppingCart, note: `Dine In ${summary?.orderCounts?.dine_in ?? 0} · TA ${summary?.orderCounts?.takeaway ?? 0} · DL ${summary?.orderCounts?.delivery ?? 0}` },
+    {
+      title: "Orders",
+      value: summary ? String(summary.totalOrders) : "—",
+      icon: ShoppingCart,
+      note: summary
+        ? `Cash Rs. ${Number(summary.methodBreakdown?.cash?.gross ?? 0).toLocaleString()} · Credit Rs. ${Number(summary.methodBreakdown?.credit?.gross ?? 0).toLocaleString()}`
+        : "—",
+    },
     { title: "Average Order", value: avgOrder ? `Rs. ${avgOrder.toLocaleString()}` : "—", icon: Receipt, note: "net ÷ orders" },
     { title: "Customers", value: customerCount != null ? String(customerCount) : "—", icon: Users, note: "in directory" },
   ];

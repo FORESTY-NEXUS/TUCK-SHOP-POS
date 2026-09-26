@@ -6,6 +6,7 @@ import { StockMovement } from "@/models/StockMovement";
 import { Customer } from "@/models/Customer";
 import { CustomerCredit } from "@/models/CustomerCredit";
 import { verifySession, SESSION_COOKIE } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -30,10 +31,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!session) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
-
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
   const action: "return" | "void" = body.action === "void" ? "void" : "return";
+
+  const requiredPerm = action === "void" ? "salesVoid" : "salesReturn";
+  if (!hasPermission(session.role, session.permissions, requiredPerm)) {
+    return NextResponse.json(
+      { error: action === "void" ? "You're not allowed to void sales" : "You're not allowed to process returns" },
+      { status: 403 }
+    );
+  }
   const reason: string | undefined = body.reason?.trim() || undefined;
 
   const sale = await Sale.findById(id);

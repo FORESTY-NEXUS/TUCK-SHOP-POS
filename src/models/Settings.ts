@@ -20,6 +20,8 @@ const SettingsSchema = new Schema(
     currency: { type: String, default: "Rs." },
     allowNegativeStock: { type: Boolean, default: false },
     receiptDisclaimer: { type: String, default: "Thank you for shopping with us!" },
+    // Udhaar (customer credit) can be switched off for shops that sell cash only.
+    udhaarEnabled: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

@@ -8,7 +8,6 @@ import {
   LayoutGrid,
   Clock,
   PieChart,
-  Users,
   ListFilter,
   Package,
   HandCoins,
@@ -30,8 +29,6 @@ const modules: ModuleTile[] = [
   { href: "/dashboard", icon: LayoutGrid, title: "Dashboard", description: "See all the useful business data and insights." },
   { href: "/orders", icon: Clock, title: "Order History", description: "Browse all orders, search and filter easily." },
   { href: "/reports", icon: PieChart, title: "Sales Reports", description: "Revenue, top items, payment breakdown." },
-  { href: "/customers", icon: Users, title: "Customers", description: "Directory, loyalty points, order history." },
- 
   { href: "/admin/products", icon: Package, title: "Products", description: "Menu items, variants, pricing, availability." },
   { href: "/admin/udhaar", icon: HandCoins, title: "Udhaar", description: "Customer credit, payments and ledger." },
   { href: "/admin/settings", icon: Settings, title: "Settings", description: "Loyalty, printer, speed dial configuration." },

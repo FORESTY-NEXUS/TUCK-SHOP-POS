@@ -155,6 +155,13 @@ export default function UdhaarClient() {
 
   // Add customer state
   const [showAddCustomer, setShowAddCustomer] = useState(false);
+  const [canCollect, setCanCollect] = useState(false);
+  useEffect(() => {
+    fetch("/api/auth/session")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.user?.permissions?.includes("udhaarCollect")) setCanCollect(true); })
+      .catch(() => {});
+  }, []);
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
   const [newNotes, setNewNotes] = useState("");
@@ -378,7 +385,7 @@ export default function UdhaarClient() {
           </div>
 
           {/* Payment buttons */}
-          {outstanding > 0 && (
+          {outstanding > 0 && canCollect && (
             <div className="flex gap-3 mt-5 pt-5 border-t border-stone-100">
               <button
                 onClick={() => openPaymentModal(false)}

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  FRONTEND_PIN,
   FRONTEND_SESSION_COOKIE,
   FRONTEND_SESSION_STORAGE_KEY,
 } from "@/lib/frontend-auth";

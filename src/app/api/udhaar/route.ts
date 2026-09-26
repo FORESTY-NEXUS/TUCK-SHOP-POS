@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { Customer } from "@/models/Customer";
 import { CustomerCredit } from "@/models/CustomerCredit";
+import { Settings } from "@/models/Settings";
 import { getDateRange } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +21,11 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(req: NextRequest) {
   await connectDB();
+
+  const settings = await Settings.findOne().lean();
+  if (settings && (settings as any).udhaarEnabled === false) {
+    return NextResponse.json({ error: "Udhaar is turned off in settings" }, { status: 403 });
+  }
 
   const params = req.nextUrl.searchParams;
   const filter = params.get("filter") || "outstanding";

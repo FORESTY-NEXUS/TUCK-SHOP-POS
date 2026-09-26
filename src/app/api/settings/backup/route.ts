@@ -3,7 +3,6 @@ import { connectDB } from "@/lib/db";
 import { User } from "@/models/User";
 import { Category } from "@/models/Category";
 import { Product } from "@/models/Product";
-import { Staff } from "@/models/Staff";
 import { Settings } from "@/models/Settings";
 import { Customer } from "@/models/Customer";
 import { Counter } from "@/models/Counter";
@@ -11,6 +10,7 @@ import { Sale } from "@/models/Sale";
 import { Shift } from "@/models/Shift";
 import { CustomerCredit } from "@/models/CustomerCredit";
 import { StockMovement } from "@/models/StockMovement";
+import { verifySession, isAdmin, SESSION_COOKIE } from "@/lib/auth";
 
 // Full DB backup for a single-machine POS.
 // Export: GET /api/settings/backup  -> JSON snapshot of every collection.
@@ -26,7 +26,6 @@ const COLLECTIONS: { name: string; model: any }[] = [
   { name: "users", model: User },
   { name: "categories", model: Category },
   { name: "products", model: Product },
-  { name: "staff", model: Staff },
   { name: "settings", model: Settings },
   { name: "customers", model: Customer },
   { name: "counters", model: Counter },
@@ -36,8 +35,15 @@ const COLLECTIONS: { name: string; model: any }[] = [
   { name: "shifts", model: Shift },
 ];
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   await connectDB();
+
+  const token = req.cookies.get(SESSION_COOKIE)?.value;
+  const session = token ? await verifySession(token) : null;
+  if (!isAdmin(session)) {
+    return NextResponse.json({ error: "Only an admin can export a full backup" }, { status: 403 });
+  }
+
   const data: Record<string, unknown> = {};
   for (const { name, model } of COLLECTIONS) {
     data[name] = await model.find({}).lean();
@@ -52,6 +58,12 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   await connectDB();
+
+  const token = req.cookies.get(SESSION_COOKIE)?.value;
+  const session = token ? await verifySession(token) : null;
+  if (!isAdmin(session)) {
+    return NextResponse.json({ error: "Only an admin can restore a backup" }, { status: 403 });
+  }
 
   let payload: any;
   try {

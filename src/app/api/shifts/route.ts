@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { Shift } from "@/models/Shift";
-import { Staff } from "@/models/Staff";
 // Required even though not referenced directly: Shift.cashier populates
 // against the "User" model by ref name, and Mongoose only knows how to
 // resolve that ref if the User schema has been registered first. Without
@@ -84,11 +83,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const shift = await Shift.create({
-    cashier: session.userId,
-    openingBalance,
-    isOpen: true,
-  });
-
-  return NextResponse.json(shift, { status: 201 });
+  try {
+    const shift = await Shift.create({
+      cashier: session.userId,
+      openingBalance,
+      isOpen: true,
+    });
+    return NextResponse.json(shift, { status: 201 });
+  } catch (err: any) {
+    if (err?.code === 11000) {
+      // Someone else's request opened a shift in the gap between our
+      // findOne check above and this create.
+      return NextResponse.json(
+        { error: "A shift is already open. Close it first." },
+        { status: 409 }
+      );
+    }
+    throw err;
+  }
 }

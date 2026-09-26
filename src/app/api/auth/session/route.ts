@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifySession, SESSION_COOKIE } from "@/lib/auth";
+import { effectivePermissions } from "@/lib/permissions";
 
 export async function GET() {
   const cookieStore = await cookies();
@@ -16,6 +17,7 @@ export async function GET() {
       userId: session.userId,
       name: session.name,
       role: session.role,
+      permissions: effectivePermissions(session.role, session.permissions),
     },
   });
 }

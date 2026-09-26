@@ -92,6 +92,18 @@ type CustomerResult = {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export default function RetailPOS() {
+  const [udhaarEnabled, setUdhaarEnabled] = useState(true);
+  const [canGiveCredit, setCanGiveCredit] = useState(false);
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((cfg) => { if (cfg && cfg.udhaarEnabled === false) setUdhaarEnabled(false); })
+      .catch(() => {});
+    fetch("/api/auth/session")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.user?.permissions?.includes("salesCreditGive")) setCanGiveCredit(true); })
+      .catch(() => {});
+  }, []);
   // ── Cart state ─────────────────────────────────────────────────────────
   const [cart, setCart] = useState<CartItem[]>([]);
 
@@ -971,7 +983,7 @@ export default function RetailPOS() {
                           </span>
                         ) : (
                           <span className="text-xs text-stone-400 tabular">
-                            Rs.{product.sellingPrice.toFixed(0)}
+                            Rs.{(product.sellingPrice ?? 0).toFixed(0)}
                           </span>
                         )}
                       </button>
@@ -1103,6 +1115,7 @@ export default function RetailPOS() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
+            {udhaarEnabled && canGiveCredit && (
             <button
               onClick={openCreditModal}
               disabled={cart.length === 0 || isCheckingOut}
@@ -1111,6 +1124,7 @@ export default function RetailPOS() {
               <CreditCard className="w-5 h-5" />
               <span className="text-sm">Credit / Udhaar</span>
             </button>
+            )}
             <button
               onClick={handleCashSale}
               disabled={cart.length === 0 || isCheckingOut}

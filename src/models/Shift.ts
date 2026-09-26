@@ -22,6 +22,10 @@ const ShiftSchema = new Schema(
   { timestamps: true }
 );
 
-ShiftSchema.index({ isOpen: 1 });
+// Was a plain (non-unique) index. A unique index scoped to isOpen:true
+// makes "only one open shift" an invariant the database enforces, not just
+// something the API checks-then-creates (which is a race, and doesn't stop
+// data inserted directly into the DB from ever violating it).
+ShiftSchema.index({ isOpen: 1 }, { unique: true, partialFilterExpression: { isOpen: true } });
 
 export const Shift = models.Shift || model("Shift", ShiftSchema);

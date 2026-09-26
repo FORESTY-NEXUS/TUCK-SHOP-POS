@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { Settings } from "@/models/Settings";
+import { verifySession, isManagerOrAdmin, SESSION_COOKIE } from "@/lib/auth";
 
 // GET /api/settings — returns current settings (singleton)
 export async function GET() {
@@ -18,15 +19,22 @@ export async function GET() {
   return NextResponse.json(settings);
 }
 
-// PATCH /api/settings — update settings
+// PATCH /api/settings — update settings (manager/admin only — a cashier
+// session shouldn't be able to change the printer/store config directly)
 export async function PATCH(req: NextRequest) {
   await connectDB();
+
+  const token = req.cookies.get(SESSION_COOKIE)?.value;
+  const session = token ? await verifySession(token) : null;
+  if (!isManagerOrAdmin(session)) {
+    return NextResponse.json({ error: "Only a manager or admin can change settings" }, { status: 403 });
+  }
 
   const body = await req.json();
   const {
     rupeesPerPoint, printerName, printerType, paperWidth, autoCut, printingEnabled,
     speedDial,
-    storeName, storeAddress, storePhone, posDisplayLogo, receiptLogo,
+    storeName, storeAddress, storePhone, posDisplayLogo, receiptLogo, udhaarEnabled,
   } = body;
 
   // Validate rupeesPerPoint
@@ -87,6 +95,10 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
+  if (udhaarEnabled !== undefined && typeof udhaarEnabled !== "boolean") {
+    return NextResponse.json({ error: "udhaarEnabled must be a boolean" }, { status: 400 });
+  }
+
   // Build update object with only provided fields
   const update: Record<string, unknown> = {};
   if (rupeesPerPoint !== undefined) update.rupeesPerPoint = rupeesPerPoint;
@@ -101,6 +113,7 @@ export async function PATCH(req: NextRequest) {
   if (storePhone !== undefined) update.storePhone = storePhone;
   if (posDisplayLogo !== undefined) update.posDisplayLogo = posDisplayLogo;
   if (receiptLogo !== undefined) update.receiptLogo = receiptLogo;
+  if (udhaarEnabled !== undefined) update.udhaarEnabled = udhaarEnabled;
 
   // Upsert: create if it doesn't exist, update if it does. A single explicit
   // $set means no two operators can ever touch the same path (the

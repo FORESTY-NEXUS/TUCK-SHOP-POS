@@ -3,7 +3,6 @@ import { Sale } from "@/models/Sale";
 import { Category } from "@/models/Category";
 import { Product } from "@/models/Product";
 import { Customer } from "@/models/Customer";
-import { Staff } from "@/models/Staff";
 import { Shift } from "@/models/Shift";
 import { Settings } from "@/models/Settings";
 import { sanitizeForClient } from "@/lib/serialize";
@@ -258,14 +257,6 @@ export async function getCategories() {
   await connectDB();
   const categories = await Category.find().sort({ sortOrder: 1 }).lean();
   return sanitizeForClient(categories);
-}
-
-export async function getStaff(role?: "waiter" | "rider", includeInactive = false) {
-  await connectDB();
-  const filter: Record<string, unknown> = includeInactive ? {} : { isActive: true };
-  if (role) filter.role = role;
-  const staff = await Staff.find(filter).sort({ name: 1 }).lean();
-  return sanitizeForClient(staff);
 }
 
 export async function getSettings() {
